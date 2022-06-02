@@ -4,10 +4,19 @@ import {Application} from "express";
 import {getAllCourses, getCourseById} from "./get-courses.route";
 import {searchLessons} from "./search-lessons.route";
 import {saveCourse} from './save-course.route';
+var cors = require('cors')
+
 
 const bodyParser = require('body-parser');
 
 const app: Application = express();
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", 'GET,PUT,POST,DELETE');
+    app.use(cors());
+    next();
+});
 
 app.use(bodyParser.json());
 

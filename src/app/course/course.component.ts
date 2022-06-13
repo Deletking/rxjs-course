@@ -15,6 +15,7 @@ import {
 } from 'rxjs/operators';
 import {merge, fromEvent, Observable, concat} from 'rxjs';
 import {Lesson} from '../model/lesson';
+import { createHttpObservable } from '../common/util';
 
 
 @Component({
@@ -25,8 +26,8 @@ import {Lesson} from '../model/lesson';
 export class CourseComponent implements OnInit, AfterViewInit {
 
 
-    course$: Observable<Course>;
-    lessons$: Observable<Lesson[]>;
+    course$: Observable<any>;
+    lessons$: Observable<any>;
 
 
     @ViewChild('searchInput', { static: true }) input: ElementRef;
@@ -40,7 +41,9 @@ export class CourseComponent implements OnInit, AfterViewInit {
 
         const courseId = this.route.snapshot.params['id'];
 
+        this.course$ = createHttpObservable(`http://localhost:9000/api/courses/${courseId}`);
 
+        this.lessons$ = createHttpObservable(`http://localhost:9000/api/lessons?`);
 
     }
 

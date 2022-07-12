@@ -13,9 +13,10 @@ import {
     withLatestFrom,
     concatAll, shareReplay
 } from 'rxjs/operators';
-import {merge, fromEvent, Observable, concat} from 'rxjs';
+import {merge, fromEvent, Observable, concat, forkJoin, pipe} from 'rxjs';
 import {Lesson} from '../model/lesson';
 import { createHttpObservable } from '../common/util';
+import { RxJsLoggingLevel, debug, setRxJsloggingLevel } from '../common/debug';
 
 
 @Component({
@@ -25,33 +26,52 @@ import { createHttpObservable } from '../common/util';
 })
 export class CourseComponent implements OnInit, AfterViewInit {
 
+    courseId: string;
 
     course$: Observable<any>;
-    lessons$: Observable<any>;
+    lessons$: Observable<Lesson[]>;
 
 
     @ViewChild('searchInput', { static: true }) input: ElementRef;
 
-    constructor(private route: ActivatedRoute) {
-
-
-    }
+    constructor(private route: ActivatedRoute) { }
 
     ngOnInit() {
+        this.courseId = this.route.snapshot.params['id'];
 
-        const courseId = this.route.snapshot.params['id'];
+        this.course$ = createHttpObservable(`http://localhost:9000/api/courses/${this.courseId}`);
 
-        this.course$ = createHttpObservable(`http://localhost:9000/api/courses/${courseId}`);
+        const lessons$ = this.loadLessons(); 
 
-        this.lessons$ = createHttpObservable(`http://localhost:9000/api/lessons?`);
-
+        forkJoin(this.course$, lessons$)
+            .pipe(
+                tap(([course, lessons]) => {
+                    console.log('course', course)
+                    
+                    console.log('lessons', lessons)
+                })
+            ).subscribe(console.log)
     }
 
     ngAfterViewInit() {
 
 
+        this.lessons$ = fromEvent<any>(this.input.nativeElement, 'keyup')
+            .pipe(
+                map(event => event.target.value),
+                startWith(''),
+                debounceTime(400),
+                distinctUntilChanged(),
+                switchMap(search => this.loadLessons(search)),
+                // debug( RxJsLoggingLevel.INFO, 'lessons value'),
+            );
+    }
 
-
+    loadLessons(search = ''): Observable<Lesson[]> {
+        return createHttpObservable(`http://localhost:9000/api/lessons?courseId=${this.courseId}&pageSize=100&filter=${search}`)
+            .pipe(
+                map(res => res['payload'])
+            );
     }
 
 

@@ -5,11 +5,15 @@ import {getAllCourses, getCourseById} from "./get-courses.route";
 import {searchLessons} from "./search-lessons.route";
 import {saveCourse} from './save-course.route';
 
+var cors = require('cors')
+
 const bodyParser = require('body-parser');
 
 const app: Application = express();
 
 app.use(bodyParser.json());
+app.use(cors());
+
 
 app.route('/api/courses').get(getAllCourses);
 
